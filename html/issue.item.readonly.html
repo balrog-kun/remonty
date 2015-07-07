@@ -1,0 +1,31 @@
+<dl class='dl-horizontal'>
+  <dt>{{ i18n.gettext('Lokalizacja') }}</dt>
+  <dd><div id='map'></div></dd>
+  <dt>{{ i18n.gettext('Stan') }}</dt>
+  <dd>{{ context.status.plain() }}</dd>
+  <dt>{{ i18n.gettext('Nazwa') }}</dt>
+  <dd>{{ context.title.plain() }}</dd>
+  <dt>{{ i18n.gettext('Opis') }}</dt>
+  <dd>{{ context.note.plain() }}</dd>
+  <dt>{{ i18n.gettext('Powiadomienia') }}</dt>
+  <dd>{{ context.nosy.plain() }}</dd>
+</dl>
+<script type="application/javascript">
+  document.body.onload = function() {
+    /* TODO: export to a commond file with the .edit version */
+    var elem = document.getElementById('map');
+
+    elem.style.width = '100%';
+    elem.style.height = '350px';
+
+    var ll = new L.LatLng({{ context.lat }}, {{ context.lon }});
+    var map = new L.Map(elem).setView(ll, {{ context.z }});
+    var osm = new L.TileLayer(
+        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { minZoom: 6, maxZoom: 19, attribution: 'OSM.org' });
+    map.addLayer(osm);
+
+    var marker = new L.Marker(ll, { draggable: false }).addTo(map);
+  }
+</script>
+<!-- SHA: dd6bc8a65386e5c678d7c1203ce80e6c221bf4c8 -->

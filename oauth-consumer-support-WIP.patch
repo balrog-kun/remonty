@@ -1,0 +1,294 @@
+diff --git a/roundup/cgi/actions.py b/roundup/cgi/actions.py
+index 13d1bc7..1817283 100644
+--- a/roundup/cgi/actions.py
++++ b/roundup/cgi/actions.py
+@@ -1,6 +1,6 @@
+-import re, cgi, time, random, csv, codecs
++import re, cgi, time, random, csv, codecs, httplib, urlparse, uuid, time
+ 
+-from roundup import hyperdb, token, date, password
++from roundup import hyperdb, token, date, password, liboauth
+ from roundup.actions import Action as BaseAction
+ from roundup.i18n import _
+ import roundup.exceptions
+@@ -8,10 +8,13 @@ from roundup.cgi import exceptions, templating
+ from roundup.mailgw import uidFromAddress
+ from roundup.anypy import io_, urllib_
+ 
++liboauth.cgi = cgi
++
+ __all__ = ['Action', 'ShowAction', 'RetireAction', 'SearchAction',
+            'EditCSVAction', 'EditItemAction', 'PassResetAction',
+            'ConfRegoAction', 'RegisterAction', 'LoginAction', 'LogoutAction',
+-           'NewItemAction', 'ExportCSVAction']
++           'NewItemAction', 'ExportCSVAction', 'OAuthLoginAction',
++           'OAuthVerifiedAction']
+ 
+ # used by a couple of routines
+ chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+@@ -788,7 +791,8 @@ class RegoCommon(Action):
+     def finishRego(self):
+         # log the new user in
+         self.client.userid = self.userid
+-        user = self.client.user = self.db.user.get(self.userid, 'username')
++        user = self.client.user = self.db.user.get(self.userid,
++            self.db.user.getkey())
+         # re-open the database for real, using the user
+         self.client.opendb(user)
+ 
+@@ -930,6 +934,195 @@ reply's additional "Re:" is ok),
+         # technically already checked, but here for clarity
+         return self.hasPermission('Register', classname=classname)
+ 
++class OAuthLoginAction(Action):
++    def handle(self):
++        """Obtain the request token from configured OAuth provider, then
++        generate a HTTP response redirecting the user to the configured
++        authorization URL.
++        """
++        # ensure login comes via GET
++        if self.client.env['REQUEST_METHOD'] != 'GET':
++            raise roundup.exceptions.Reject(self._('Invalid request'))
++
++        request_token_url = self.db.config['OAUTH_REQUEST_TOKEN_URL']
++        authorization_url = self.db.config['OAUTH_AUTHORIZATION_URL']
++        access_token_url = self.db.config['OAUTH_ACCESS_TOKEN_URL']
++        consumer_key = self.db.config['OAUTH_CONSUMER_KEY']
++        consumer_secret = self.db.config['OAUTH_CONSUMER_SECRET']
++
++        # Basic config validation
++        if not consumer_key or not consumer_secret:
++            raise roundup.exceptions.Reject(self._('OAuth not configured'))
++        try:
++            urlparse.urlparse(request_token_url)
++            urlparse.urlparse(authorization_url)
++            urlparse.urlparse(access_token_url)
++        except:
++            raise roundup.exceptions.Reject(self._('OAuth not configured'))
++
++        # Come up with a local unique token for the login action to
++        # be used in the callback URL for verification, i.e. an OTK
++        local_token = str(uuid.uuid4())
++
++        consumer = liboauth.OAuthConsumer(consumer_key, consumer_secret)
++        signature_method_hmac_sha1 = liboauth.OAuthSignatureMethod_HMAC_SHA1()
++
++        # Generate the request token for the authorization
++        oauth_request = liboauth.OAuthRequest.from_consumer_and_token(
++            consumer, callback=self.base + '?@action=oauthverified' +
++            '&local_token=' + local_token, http_url=request_token_url)
++        oauth_request.sign_request(signature_method_hmac_sha1, consumer, None)
++
++        hostport_addr = urlparse.urlparse(oauth_request.http_url)[1]
++        connection = httplib.HTTPConnection(hostport_addr)
++        try:
++            connection.request(oauth_request.http_method,
++                oauth_request.http_url, headers=oauth_request.to_header())
++            req_token_response = connection.getresponse().read()
++        finally:
++            connection.close()
++
++        request_token = liboauth.OAuthToken.from_string(req_token_response)
++        if not request_token.callback_confirmed:
++            # This may mean OAuth version less than 1.0a
++            raise roundup.exceptions.Reject(self._(
++                'OAuth Service Provider didn\'t confirm Callback URL'))
++
++        # Save local_token + timestamp + request_token for callback verification
++        otks = self.db.getOTKManager()
++        otks.set(local_token, timestamp=time.time(),
++            request_token=req_token_response)
++        self.db.commit()
++
++        # Make the browser perform the authorization request
++        oauth_request = liboauth.OAuthRequest.from_token_and_callback(
++            token=request_token, http_url=authorization_url)
++
++        raise exceptions.Redirect(oauth_request.to_url())
++
++class OAuthVerifiedAction(RegoCommon):
++    def handle(self):
++        """Check the oauth_token and oauth_verifier parameters against
++        our recent OAuth request tokens, if match then obtain and acccess
++        token, use it to query the Service Provider for the username and
++        email, optionally register new user and finally log them in.
++        """
++        # ensure login comes via GET
++        if self.client.env['REQUEST_METHOD'] != 'GET':
++            raise roundup.exceptions.Reject(self._('Invalid request'))
++
++        # find the parameters returned by Service Provider
++        local_token = self.form['local_token'].value
++        oauth_token = self.form['oauth_token'].value
++        oauth_verifier = self.form['oauth_verifier'].value
++
++        # Check if they match any of our recent request tokens
++        otks = self.db.getOTKManager()
++        try:
++            req_token_response = otks.get(local_token, 'request_token')
++        except KeyError:
++            raise roundup.exceptions.Reject(self._('Invalid login'))
++
++        request_token = liboauth.OAuthToken.from_string(req_token_response)
++        if oauth_token != request_token.key:
++             raise roundup.exceptions.Reject(self._('Invalid login'))
++
++        timestamp = otks.get(local_token, 'timestamp')
++        if time.time() - timestamp > 2 * 3600:
++             raise roundup.exceptions.Reject(self._('Login timed out'))
++
++        otks.destroy(local_token)
++        self.db.commit()
++
++        access_token_url = self.db.config['OAUTH_ACCESS_TOKEN_URL']
++        consumer_key = self.db.config['OAUTH_CONSUMER_KEY']
++        consumer_secret = self.db.config['OAUTH_CONSUMER_SECRET']
++
++        consumer = liboauth.OAuthConsumer(consumer_key, consumer_secret)
++        signature_method_hmac_sha1 = liboauth.OAuthSignatureMethod_HMAC_SHA1()
++
++        # Generate the access token for later use
++        oauth_request = liboauth.OAuthRequest.from_consumer_and_token(
++            consumer, token=request_token, verifier=oauth_verifier,
++            http_url=access_token_url)
++        oauth_request.sign_request(signature_method_hmac_sha1, consumer,
++            request_token)
++
++        hostport_addr = urlparse.urlparse(oauth_request.http_url)[1]
++        connection = httplib.HTTPConnection(hostport_addr)
++        try:
++            connection.request(oauth_request.http_method,
++                oauth_request.http_url, headers=oauth_request.to_header())
++            response = connection.getresponse().read()
++        finally:
++            connection.close()
++
++        access_token = liboauth.OAuthToken.from_string(response)
++
++        # We now have our access token, now we need to ask the Service
++        # Provider-specific code to make a username request for us so we
++        # can create and/or log in the new user
++
++        ### OSM ###
++        user_details_url = 'http://api.openstreetmap.org/api/0.6/user/details'
++
++        osm_request = liboauth.OAuthRequest.from_consumer_and_token(
++            consumer, token=access_token, http_url=user_details_url,
++            http_method='GET')
++        osm_request.sign_request(signature_method_hmac_sha1, consumer,
++            access_token)
++
++        hostport_addr = urlparse.urlparse(osm_request.http_url)[1]
++        connection = httplib.HTTPConnection(hostport_addr)
++        try:
++            connection.request(osm_request.http_method,
++                osm_request.http_url, headers=osm_request.to_header())
++            user_details = connection.getresponse().read()
++        finally:
++            connection.close()
++
++        import xml.etree.cElementTree as ElementTree
++        root = ElementTree.fromstring(user_details)
++        if root.tag != 'osm':
++            raise roundup.exceptions.Reject(self._('User details error'))
++
++        uid = None
++        username = None
++        for user in root:
++            if user.tag != 'user':
++                continue
++            if 'id' not in user.attrib or 'display_name' not in user.attrib:
++                raise roundup.exceptions.Reject(self._('User details error'))
++            osmid = user.attrib['id']
++            username = user.attrib['display_name']
++
++        if not username:
++            raise roundup.exceptions.Reject(self._('User details error'))
++
++        # Finally check if already regisered, register and log in
++        try:
++            self.db.user.lookup(osmid)
++        except (KeyError, IndexError):
++            self.nodeid = self.db.user.create(osmid=osmid,
++                username=username, osmusername=username,
++                roles=self.db.config['NEW_WEB_USER_ROLES'])
++            self.db.commit()
++
++            # finish off by logging the user in
++            self.userid = self.nodeid
++            return self.finishRego()
++
++        # now we're OK, re-open the database for real, using the user
++        self.client.user = osmid
++        self.client.opendb(self.client.user)
++
++        # save user in session
++        self.client.session_api.set(user=self.client.user)
++        self.client.session_api.update(set_cookie=True, expire=24*3600*365)
++
++        # TODO: 'remember' and 'came_from' functionality through the callback
++        # URL or the OTK record
++
+ class LogoutAction(Action):
+     def handle(self):
+         """Make us really anonymous - nuke the session too."""
+diff --git a/roundup/cgi/client.py b/roundup/cgi/client.py
+index 7161efa..0a8c725 100644
+--- a/roundup/cgi/client.py
++++ b/roundup/cgi/client.py
+@@ -1176,6 +1176,8 @@ class Client:
+         ('retire',      RetireAction),
+         ('show',        ShowAction),
+         ('export_csv',  ExportCSVAction),
++        ('oauthlogin',  OAuthLoginAction),
++        ('oauthverified', OAuthVerifiedAction),
+     )
+     def handle_action(self):
+         """ Determine whether there should be an Action called.
+diff --git a/roundup/cgi/templating.py b/roundup/cgi/templating.py
+index e292014..9c27acc 100644
+--- a/roundup/cgi/templating.py
++++ b/roundup/cgi/templating.py
+@@ -2005,10 +2005,10 @@ class LinkHTMLProperty(HTMLProperty):
+         l = ['<select %s>'%cgi_escape_attrs(name = self._formname,
+                                             **html_kwargs)]
+         k = linkcl.labelprop(1)
+-        s = ''
+-        if value is None:
+-            s = 'selected="selected" '
+-        l.append(self._('<option %svalue="-1">- no selection -</option>')%s)
++        #s = ''
++        #if value is None:
++        #    s = 'selected="selected" '
++        #l.append(self._('<option %svalue="-1">- no selection -</option>')%s)
+ 
+         if sort_on is not None:
+             if not isinstance(sort_on, tuple):
+diff --git a/roundup/configuration.py b/roundup/configuration.py
+index a247164..5272cba 100644
+--- a/roundup/configuration.py
++++ b/roundup/configuration.py
+@@ -868,6 +868,23 @@ SETTINGS = (
+             "won't be attached to nosy mails. They will be replaced by\n"
+             "a link to the tracker's download page for the file.")
+     ), "Nosy messages sending"),
++    ("oauth", (
++        (Option, "request_token_url", "",
++            "The Request Token URL provided by the OAuth Service Provider."),
++        (Option, "access_token_url", "",
++            "The Access Token URL provided by the OAuth Service Provider."),
++        (Option, "authorization_url", "",
++            "The user Authorization URL provided by the OAuth Service \n"
++            "Provider."),
++        (Option, "consumer_key", "",
++            "Your application (aka. Consumer) key generated by the OAuth \n"
++            "Service Provider usually on your request made through their \n"
++            "website."),
++        (Option, "consumer_secret", "",
++            "Your application (aka. Consumer) secret generated by the OAuth \n"
++            "Service Provider usually on your request made through their \n"
++            "website."),
++    ), "OAuth user authentication"),
+ )
+ 
+ ### Configuration classes

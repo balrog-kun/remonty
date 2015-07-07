@@ -1,0 +1,322 @@
+<form method="POST"
+      {% if context.id %}
+        action='issue{{ context.id }}'
+      {% else %}
+        action='issue'
+      {% endif %}
+      name="itemSynopsis"
+      enctype="multipart/form-data"
+  >
+  <fieldset>
+    <!-- map -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <div class='controls'>
+          <div id='map'></div>
+        </div>
+        <input type="hidden" name="lat" id="lat" value="{{ context.lat }}" required>
+        <input type="hidden" name="lon" id="lon" value="{{ context.lon }}" required>
+        <input type="hidden" name="z" id="z" value="{{ context.z }}" required>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- Status -->
+    <div class='row-fluid'>
+      <div class='control-group span6'>
+        <label class='control-label' for='status'>{{ i18n.gettext('Stan') }}</label>
+        <div class='controls'>
+          {{ context.status.menu() }}
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- title TODO: move to the same row as status -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <label class='control-label' for='title'>{{ i18n.gettext('Nazwa (opcjonalna)') }}</label>
+        <div class='controls'>
+          <input name='title' id='title' type='text' class='input-xxlarge' value='{{ context.title }}'>
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- dates -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <label class='control-label' for='title'>{{ i18n.gettext('Daty') }}</label>
+        <input name='dates' id='dates' type='hidden' value='{{ context.dates }}'>
+        <div class='controls' id='dates-editor'></div>
+	<div class='btn' id='dates-add' form='' form_id=''>
+	  <i class="icon-plus-sign"></i></div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- link -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <label class='control-label' for='title'>{{ i18n.gettext('Link (opcjonalny)') }}</label>
+        <div class='controls'>
+          <div class='input-append'>
+            <input name='url' id='url' type='text' class='input-xxlarge span2' value='{{ context.url }}'>
+	    <span class="add-on"><i class="icon-bookmark"></i></span>
+          </div>
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- Note -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <label class='control-label' for='note'>{{ i18n.gettext('Opis (opcjonalny - jakich tras będzie dotyczyć, ...') }}</label>
+        <div class='controls'>
+	  <textarea name='note' rows="5" class='input-xxlarge' id='note'>{{ context.note }}</textarea>
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- Nosy list -->
+    <div class='row-fluid'>
+      <div class='control-group span6'>
+        <label class='control-label' for='nosylist'>{{ i18n.gettext('Do powiadomienia (opcjonalnie)') }}</label>
+        <div class='controls'>
+          <input type='text' name='nosy'>
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    <!-- File upload -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <label class='control-label' for='file_upload'>{{ i18n.gettext('Załącznik (opcjonalny)') }}</label>
+        <div class='controls'>
+          <input type="file" name="@file" id='file_upload'>
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+
+    {% if context.id %}
+    <!-- Note -->
+    <div class='row-fluid'>
+      <div class='control-group'>
+        <label class='control-label' for='change_note'>{{ i18n.gettext('Komentarz') }}</label>
+        <div class='controls'>
+          <textarea name="@note" rows="3" cols="50" width="100%" class='input-medium' id='change_note'></textarea>
+        </div>
+      </div>
+    </div> <!-- row-fluid -->
+    {% endif %}
+
+  </fieldset>
+  <div class='form-actions'>
+    {{ context.submit() }}
+    {% if context.id %}
+      <a href='{{ context.copy_url() }}'>{{ i18n.gettext('Kopia') }}</a>
+    {% endif %}
+  </div>
+  <input type="hidden" name="@template" value="item">
+  <input type="hidden" name="@required" value="status,lat,lon,z">
+  <script type="application/javascript">
+    function map_setup(fresh, editable) {
+      var elem = document.getElementById('map');
+      var elem_lat = document.getElementById('lat');
+      var elem_lon = document.getElementById('lon');
+      var elem_z = document.getElementById('z');
+      var ll = [ parseFloat(elem_lat.value), parseFloat(elem_lon.value) ];
+      var z = parseInt(elem_z.value);
+      if (isNaN(ll[0]) || isNaN(ll[1]) || ll[0] < -80 || ll[0] > 80 ||
+          ll[1] <= -180 || ll[1] >= 180 || isNaN(z) || z < 12 || z > 19)
+        fresh = true;
+
+      if (fresh)
+        elem_z.value = ''; /* Prevent form submit until valid */
+
+      ll = fresh ? new L.LatLng(52, 19.5) : new L.LatLng(ll[0], ll[1]);
+
+      elem.style.width = '100%';
+      elem.style.height = '350px';
+      var map = new L.Map(elem).setView(ll, fresh ? 7 : z);
+      var osm = new L.TileLayer(
+          'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          { minZoom: 6, maxZoom: 19, attribution: 'OSM.org' });
+      map.addLayer(osm);
+
+      var marker = null;
+
+      function set_marker(ll) {
+        marker = new L.Marker(ll, { draggable: editable }).addTo(map);
+
+        marker.on('move', function(e) {
+            elem_lat.value = '' + e.latlng.lat;
+            elem_lon.value = '' + e.latlng.lng;
+            elem_z.value = '' + map.getZoom();
+          });
+      };
+
+      if (fresh && editable)
+        map.on('click', function(e) {
+            if (marker !== null)
+              return;
+            var ll = e.latlng;
+            var z = map.getZoom();
+            if (z < 12)
+              return;
+            elem_lat.value = '' + ll.lat;
+            elem_lon.value = '' + ll.lng;
+            elem_z.value = '' + z;
+
+            set_marker(ll);
+          });
+      else if (!fresh)
+        set_marker(ll);
+    }
+
+    function dates_setup(fresh, editable) {
+      var elem = document.getElementById('dates-editor');
+      var elem_dates = document.getElementById('dates');
+
+      var dates = [];
+      function value_update() {
+        var d = [];
+	for (var i = 0; i < dates.length; i++)
+          d.push(dates[i].join('.'));
+	elem_dates.value = encodeURI(d.join('\n'));
+      }
+
+      function move_row(row, move) {
+	var idx = dates.indexOf(row.dates);
+	dates.splice(idx, 1);
+	dates.splice(idx + move, 0, row.dates);
+	if (move == -1) {
+	  var prev = row.previousSibling;
+	  elem.removeChild(row);
+	  elem.insertBefore(row, prev);
+	} else {
+	  var next = row.nextSibling;
+	  elem.removeChild(next);
+	  elem.insertBefore(next, row);
+	}
+	value_update();
+      }
+
+      function sort_update(row) {
+	while (1) {
+	  var idx = dates.indexOf(row.dates);
+	  if (idx && new Date(dates[idx][0], dates[idx][1], dates[idx][2]) <
+	      new Date(dates[idx - 1][0], dates[idx - 1][1], dates[idx - 1][2]))
+	    move_row(row, -1);
+	  else if (idx < dates.length - 1 &&
+	      new Date(dates[idx][0], dates[idx][1], dates[idx][2]) >
+	      new Date(dates[idx + 1][0], dates[idx + 1][1], dates[idx + 1][2]))
+	    move_row(row, 1);
+	  else
+	    break;
+	}
+      }
+
+      function add_date(d) {
+	dates.push(d);
+
+	var row = document.createElement('div');
+	row.dates = d;
+	row.elem_date = document.createElement('span');
+	row.elem_name = document.createElement('input');
+	row.elem_del = document.createElement('button');
+
+	row.elem_date.innerHTML = '<input type="text" class="span2" />' +
+	  '<span class="add-on"><i class="icon-calendar"></i></span>';
+	row.elem_date.setAttribute('class', 'input-append date');
+	$(row.elem_date).datepicker({
+	    format: "yyyy-mm-dd",
+            calendarWeeks: true,
+	    todayHighlight: true,
+	    language: "pl",
+	  });
+	$(row.elem_date).datepicker('update', new Date(d[0], d[1], d[2]));
+	$(row.elem_date).datepicker().on('changeDate', function(e) {
+	    $(this).context.state.dates[0] = e.date.getFullYear();
+	    $(this).context.state.dates[1] = e.date.getMonth();
+	    $(this).context.state.dates[2] = e.date.getDate();
+	    sort_update($(this).context.state);
+	    value_update();
+	  });
+	row.elem_date.state = row;
+
+	row.elem_name.setAttribute('class', 'input-xxlarge')
+	row.elem_name.setAttribute('form_id', '')
+	row.elem_name.setAttribute('form', '')
+	row.elem_name.setAttribute('type', 'text')
+	row.elem_name.value = d[3];
+	$(row.elem_name).on('input', function(e) {
+	    $(this).context.state.dates[3] = $(this).context.value;
+	    value_update();
+	  });
+	row.elem_name.state = row;
+
+	row.elem_del.setAttribute('class', 'btn')
+	row.elem_del.setAttribute('form_id', '')
+	row.elem_del.setAttribute('form', '')
+	row.elem_del.innerHTML = '<i class="icon-remove-sign"></i>';
+	$(row.elem_del).on('click', function(e) {
+	    dates.splice(dates.indexOf($(this).context.state.dates), 1);
+	    elem.removeChild($(this).context.state);
+	    value_update();
+	  });
+	row.elem_del.state = row;
+
+	row.appendChild(row.elem_date);
+	row.appendChild(row.elem_name);
+	row.appendChild(row.elem_del);
+
+	elem.appendChild(row);
+      }
+
+      var value = decodeURI(elem_dates.value).split('\n');
+      for (var i = 0; i < value.length; i++) {
+        var fragments = value[i].split('.');
+        if (fragments.length < 4)
+	  fresh = true;
+      }
+
+      if (fresh) {
+	var now = Date.now();
+	var today = new Date(now);
+	var in2wk = new Date(now + 14 * 24 * 3600 * 1000);
+	add_date([ today.getFullYear(), today.getMonth(), today.getDate(),
+	    'Zamknięcie' ]);
+        add_date([ in2wk.getFullYear(), in2wk.getMonth(), in2wk.getDate(),
+	    'Otwarcie' ]);
+      } else
+        for (var i = 0; i < value.length; i++) {
+          var fragments = value[i].split('.');
+	  var year = fragments.shift();
+	  var month = fragments.shift();
+	  var day = fragments.shift();
+	  add_date([ year, month, day, fragments.join('.') ]);
+        }
+
+      value_update();
+
+      $('#dates-add').on('click', function(e) {
+          var new_date = new Date();
+	  if (dates.length) {
+	    var d = dates[dates.length - 1];
+	    new_date = new Date(d[0], d[1], d[2] + 1);
+	  }
+	  add_date([ new_date.getFullYear(), new_date.getMonth(),
+	      new_date.getDate(), '...' ]);
+	});
+    }
+
+    document.body.onload = function() {
+      {% if context.id %}
+      var fresh = false;
+      {% else %}
+      var fresh = true;
+      {% endif %}
+
+      map_setup(fresh, true);
+      dates_setup(fresh, true);
+    }
+  </script>
+</form>
+<!-- SHA: 3d31330a2f1a6bfb621ee18dd569588d20f1d09e -->
