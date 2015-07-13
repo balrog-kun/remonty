@@ -1,11 +1,11 @@
 {% extends 'layout/page.html' %}
 
 {% block head_title %}
-  {{ i18n.gettext('Aktualne remonty') }}
+  {{ request.dispname or 'Remonty' }}
 {% endblock %}
 
 {% block page_header %}
-  {{ i18n.gettext('Aktualne remonty') }}
+  {{ request.dispname or 'Aktualne remonty' }}
 {% endblock %}
 
 {% block content %}
