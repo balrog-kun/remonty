@@ -224,7 +224,7 @@
 	row.elem_name = document.createElement('input');
 	row.elem_del = document.createElement('button');
 
-	row.elem_date.innerHTML = '<input type="text" class="span2" />' +
+	row.elem_date.innerHTML = '<input type="text" class="input-medium" />' +
 	  '<span class="add-on"><i class="icon-calendar"></i></span>';
 	row.elem_date.setAttribute('class', 'input-append date');
 	$(row.elem_date).datepicker({
@@ -243,10 +243,10 @@
 	  });
 	row.elem_date.state = row;
 
-	row.elem_name.setAttribute('class', 'input-xxlarge')
-	row.elem_name.setAttribute('form_id', '')
-	row.elem_name.setAttribute('form', '')
-	row.elem_name.setAttribute('type', 'text')
+	row.elem_name.setAttribute('class', 'input-xxlarge');
+	row.elem_name.setAttribute('form_id', '');
+	row.elem_name.setAttribute('form', '');
+	row.elem_name.setAttribute('type', 'text');
 	row.elem_name.value = d[3];
 	$(row.elem_name).on('input', function(e) {
 	    $(this).context.state.dates[3] = $(this).context.value;
@@ -254,9 +254,9 @@
 	  });
 	row.elem_name.state = row;
 
-	row.elem_del.setAttribute('class', 'btn')
-	row.elem_del.setAttribute('form_id', '')
-	row.elem_del.setAttribute('form', '')
+	row.elem_del.setAttribute('class', 'btn');
+	row.elem_del.setAttribute('form_id', '');
+	row.elem_del.setAttribute('form', '');
 	row.elem_del.innerHTML = '<i class="icon-remove-sign"></i>';
 	$(row.elem_del).on('click', function(e) {
 	    dates.splice(dates.indexOf($(this).context.state.dates), 1);
@@ -266,9 +266,12 @@
 	row.elem_del.state = row;
 
 	row.appendChild(row.elem_date);
+	row.appendChild(document.createTextNode(' '));
 	row.appendChild(row.elem_name);
+	row.appendChild(document.createTextNode(' '));
 	row.appendChild(row.elem_del);
 
+	row.setAttribute('class', 'controls form-horizontal');
 	elem.appendChild(row);
       }
 
