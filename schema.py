@@ -114,6 +114,9 @@ for cl in 'status',:  # 'priority'
 # if you don't want them to
 #db.security.addPermissionToRole('User', 'View', 'user')
 
+# Access to some properties is necessary for searching by creator.
+db.security.addPermissionToRole('User', 'View', 'user')
+
 # Users should be able to edit their own details -- this permission is
 # limited to only the situation where the Viewed or Edited item is their own.
 def own_record(db, userid, itemid):
