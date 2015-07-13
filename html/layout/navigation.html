@@ -1,3 +1,5 @@
+{% set status_notresolved="1,2,3,4,6,7" %}
+{% set status_resolved="5,8" %}
 {% if request.user.hasPermission('View', 'issue') %}
   <ul class='nav nav-list'>
     <li class='nav-header'>
@@ -16,9 +18,20 @@
         '@filter': 'status',
         '@columns': columns_showall,
         '@search_text': '',
-        'status': status_notresolved,
-        '@dispname': i18n.gettext('Wszystkie'),
-       }) }}">{{ i18n.gettext('Wszystkie') }}</a>
+	'status': status_notresolved,
+        '@dispname': i18n.gettext('Aktualne remonty'),
+       }) }}">{{ i18n.gettext('Aktualne') }}</a>
+    </li>
+    <li>
+      <a href="{{ request.indexargs_url('issue', {
+        '@sort': '-activity',
+        '@group': 'priority',
+        '@filter': 'status',
+        '@columns': columns_showall,
+        '@search_text': '',
+	'status': status_resolved,
+        '@dispname': i18n.gettext('Zamknięte remonty'),
+       }) }}">{{ i18n.gettext('Zamknięte') }}</a>
     </li>
     <li>
       <a href="issue?@template=search">{{ i18n.gettext('Szukaj') }}</a>
@@ -71,10 +84,9 @@
     <li>
       <a href="{{ request.indexargs_url('issue', {
         '@sort': '-activity',
-        '@filter': 'status',
+        '@filter': 'creator',
         '@columns': 'id,activity,title,creator,status',
         '@search_text': '',
-        'status': status_notresolved,
         'creator': request.user.id,
         '@dispname': i18n.gettext('Twoje remonty'),
       }) }}">{{ i18n.gettext('Twoje remonty') }}</a>

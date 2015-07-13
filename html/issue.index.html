@@ -17,22 +17,28 @@
       <table class='table'>
         <tr class='info'>
           <td>{{ i18n.gettext('ID') }}</td>
-          <td>{{ i18n.gettext('Modyfikowano') }}</td>
-          <td>{{ i18n.gettext('Użytkownik') }}</td>
           <td>{{ i18n.gettext('Nazwa') }}</td>
+          <td>{{ i18n.gettext('Lokalizacja') }}</td>
           <td>{{ i18n.gettext('Stan') }}</td>
-          <td>{{ i18n.gettext('Autor') }}</td>
+          <td>{{ i18n.gettext('Ostatnia zmiana') }}</td>
+          <td>{{ i18n.gettext('Zmienił') }}</td>
+          <td>{{ i18n.gettext('Dodał') }}</td>
         </tr>
         {% for issue in context.list() %}
           <tr>
-           <td>{{ issue.id }}</td>
-           <td>{{ issue.activity }}</td>
-           <td>{{ issue.actor }}</td>
+           <td>
+            <a href='issue{{ issue.id }}'>{{ issue.id }}</a>
+           </td>
            <td>
             <a href='issue{{ issue.id }}'>{{ issue.title.plain(hyperlink=0) }}</a>
            </td>
+           <td>
+            <a href='issue{{ issue.id }}'>{{ issue.location.plain(hyperlink=0) }}</a>
+           </td>
            <td>{{ issue.status.plain() }}</td>
+           <td>{{ issue.activity }}</td>
            <td>{{ issue.creator.plain() }}</td>
+           <td>{{ issue.actor }}</td>
           </tr>
         {% endfor %}
       </table>
