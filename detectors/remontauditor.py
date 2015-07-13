@@ -1,4 +1,9 @@
 import urllib
+import os, inspect
+
+tracker_home = os.path.dirname(os.path.abspath(
+	inspect.getfile(inspect.currentframe()))) + '/..'
+sys.path.append(tracker_home)
 
 def check_dates(db, cl, nodeid, newvalues):
     dates = urllib.unquote(newvalues['dates'])
