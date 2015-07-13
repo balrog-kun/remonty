@@ -116,13 +116,14 @@
   <input type="hidden" name="@template" value="item">
   <input type="hidden" name="@required" value="status,lat,lon,z">
   <script type="application/javascript">
-    function map_setup(fresh, editable) {
+    function map_setup(create, editable) {
       var elem = document.getElementById('map');
       var elem_lat = document.getElementById('lat');
       var elem_lon = document.getElementById('lon');
       var elem_z = document.getElementById('z');
       var ll = [ parseFloat(elem_lat.value), parseFloat(elem_lon.value) ];
       var z = parseInt(elem_z.value);
+      var fresh = false;
       if (isNaN(ll[0]) || isNaN(ll[1]) || ll[0] < -80 || ll[0] > 80 ||
           ll[1] <= -180 || ll[1] >= 180 || isNaN(z) || z < 12 || z > 19)
         fresh = true;
@@ -170,7 +171,8 @@
         set_marker(ll);
     }
 
-    function dates_setup(fresh, editable) {
+    function dates_setup(create, editable) {
+      var fresh = false;
       var elem = document.getElementById('dates-editor');
       var elem_dates = document.getElementById('dates');
 
@@ -276,6 +278,8 @@
         if (fragments.length < 4)
 	  fresh = true;
       }
+      if (value.length < 2)
+	fresh = true;
 
       if (fresh) {
 	var now = Date.now();
