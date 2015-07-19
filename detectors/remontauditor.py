@@ -9,17 +9,18 @@ import search_py2
 
 def check_dates(db, cl, nodeid, newvalues):
     dates = urllib.unquote(newvalues['dates'])
-    dates = [ v.split('.', 3) for v in dates.split('\n') ]
+    dates = [ v.split('*', 4) for v in dates.split('\n') ]
 
-    if len(dates) < 2:
+    if len(dates) < 1:
 	raise ValueError, 'Potrzebne są przynajmniej przybliżone daty ' + \
             'rozpoczęcia i zakończenia prac'
     prev = ( 0, 0, 0 )
-    for yr, mo, dy, desc in dates:
+    for yr, mo, dy, note, desc in dates:
 	date = ( int(yr), int(mo), int(dy) )
-	if date[0] < 1980 or date[0] > 2030:
+	int(note)
+	if date[0] < 1980 or date[0] > 2022:
 	    raise ValueError, 'Data ' + str(date) + ' jest zbyt odległa'
-        if date[1] < 0 or date[1] > 11:
+        if date[1] < 1 or date[1] > 12:
 	    raise ValueError, 'Nieprawidłowy miesiąc'
         if date[2] < 1 or date[2] > 31:
 	    raise ValueError, 'Nieprawidłowy dzień miesiąca'

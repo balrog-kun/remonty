@@ -153,21 +153,22 @@
           });
       };
 
-      if (fresh && editable)
-        map.on('click', function(e) {
-            if (marker !== null)
-              return;
-            var ll = e.latlng;
-            var z = map.getZoom();
-            if (z < 12)
-              return;
-            elem_lat.value = '' + ll.lat;
-            elem_lon.value = '' + ll.lng;
-            elem_z.value = '' + z;
+      if (fresh && editable) {
+        var maponclick = function(e) {
+          if (marker !== null)
+            return;
+          var ll = e.latlng;
+          var z = map.getZoom();
+          if (z < 12)
+            return;
+          elem_lat.value = '' + ll.lat;
+          elem_lon.value = '' + ll.lng;
+          elem_z.value = '' + z;
 
-            set_marker(ll);
-          });
-      else if (!fresh)
+          set_marker(ll);
+        };
+        map.on('click', maponclick);
+      } else if (!fresh)
         set_marker(ll);
     }
 
@@ -180,7 +181,8 @@
       function value_update() {
         var d = [];
 	for (var i = 0; i < dates.length; i++)
-          d.push(dates[i].join('.'));
+	  d.push(dates[i][0] + '*' + (parseInt(dates[i][1]) + 1) + '*' +
+	      dates[i][2] + '*' + dates[i][3] + '*' + dates[i][4]);
 	elem_dates.value = encodeURI(d.join('\n'));
       }
 
@@ -247,9 +249,9 @@
 	row.elem_name.setAttribute('form_id', '');
 	row.elem_name.setAttribute('form', '');
 	row.elem_name.setAttribute('type', 'text');
-	row.elem_name.value = d[3];
+	row.elem_name.value = d[4];
 	$(row.elem_name).on('input', function(e) {
-	    $(this).context.state.dates[3] = $(this).context.value;
+	    $(this).context.state.dates[4] = $(this).context.value;
 	    value_update();
 	  });
 	row.elem_name.state = row;
@@ -277,11 +279,11 @@
 
       var value = decodeURI(elem_dates.value).split('\n');
       for (var i = 0; i < value.length; i++) {
-        var fragments = value[i].split('.');
-        if (fragments.length < 4)
+        var fragments = value[i].split('*');
+        if (fragments.length < 5)
 	  fresh = true;
       }
-      if (value.length < 2)
+      if (value.length < 1)
 	fresh = true;
 
       if (fresh) {
@@ -289,16 +291,17 @@
 	var today = new Date(now);
 	var in2wk = new Date(now + 14 * 24 * 3600 * 1000);
 	add_date([ today.getFullYear(), today.getMonth(), today.getDate(),
-	    'Zamknięcie' ]);
+	    0, 'Rozpoczęcie prac' ]);
         add_date([ in2wk.getFullYear(), in2wk.getMonth(), in2wk.getDate(),
-	    'Otwarcie' ]);
+	    0, 'Otwarcie' ]);
       } else
         for (var i = 0; i < value.length; i++) {
-          var fragments = value[i].split('.');
+          var fragments = value[i].split('*');
 	  var year = fragments.shift();
-	  var month = fragments.shift();
+	  var month = parseInt(fragments.shift()) - 1;
 	  var day = fragments.shift();
-	  add_date([ year, month, day, fragments.join('.') ]);
+	  var note = fragments.shift();
+	  add_date([ year, month, day, note, fragments.join('*') ]);
         }
 
       value_update();
@@ -307,10 +310,10 @@
           var new_date = new Date();
 	  if (dates.length) {
 	    var d = dates[dates.length - 1];
-	    new_date = new Date(d[0], d[1], d[2] + 1);
+	    new_date = new Date(d[0], d[1], parseInt(d[2]) + 1);
 	  }
 	  add_date([ new_date.getFullYear(), new_date.getMonth(),
-	      new_date.getDate(), '...' ]);
+	      new_date.getDate(), 0, '...' ]);
 	});
     }
 
