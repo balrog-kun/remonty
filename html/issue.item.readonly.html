@@ -4,9 +4,9 @@
   <dt>{{ i18n.gettext('Stan') }}</dt>
   <dd>{{ context.status.plain() }}</dd>
   <dt>{{ i18n.gettext('Nazwa') }}</dt>
-  <dd>{{ context.title.plain() }}</dd>
+  <dd>{{ utils.prettify(context.title.plain(hyperlink=1)) }}</dd>
   <dt>{{ i18n.gettext('Opis') }}</dt>
-  <dd>{{ context.note.plain() }}</dd>
+  <dd>{{ utils.prettify(context.note.plain(hyperlink=1)) }}</dd>
   <dt>{{ i18n.gettext('Powiadomienia') }}</dt>
   <dd>{{ context.nosy.plain() }}</dd>
 </dl>
