@@ -1,6 +1,6 @@
-{{ 
+{{
   db.issue.renderWith('index',
-    sort=[('-', 'activity')], group=[('+', 'creation')],
+    sort=[('-', 'activity')],
     filter=['status'],
     columns=['id', 'activity', 'title', 'creator', 'status'],
     filterspec={'status':['1','2','3','4','6','7']}
