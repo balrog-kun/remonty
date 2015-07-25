@@ -15,8 +15,13 @@ def check_dates(db, cl, nodeid, newvalues):
             'rozpoczęcia i zakończenia prac'
 
 def flush_dates(db, cl, nodeid, oldvalues):
-    # TODO: drop nameddate objects that have been unlinked from the issue
-    # object
+    # Drop nameddate objects that have been unlinked from the issue object
+
+    previous = { dateid: 1 for dateid in cl.get(nodeid, 'dates') }
+    removed = [ date for date in oldvalues['dates'] if date not in previous ]
+
+    for dateid in removed:
+	db.nameddate.retire(dateid)
 
 def add_location(db, cl, nodeid, newvalues):
     ll = ( newvalues['lat'], newvalues['lon'] )
