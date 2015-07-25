@@ -21,11 +21,6 @@ stat = Class(db, "status",
                 order=Number())
 stat.setkey("name")
 
-# Keywords
-keyword = Class(db, "keyword",
-                name=String())
-keyword.setkey("name")
-
 # User-defined saved searches
 query = Class(db, "query",
                 klass=String(),
@@ -66,8 +61,10 @@ file = FileClass(db, "file",
                 name=String())
 
 nameddate = Class(db, "nameddate",
-                name=String(),
-                date=Date())
+                issue=Link("issue"),
+                date=Date(),
+                desc=String(),
+                note=Number())
 
 # IssueClass automatically gets these properties in addition to the Class ones:
 #   title = String()
@@ -85,8 +82,7 @@ issue = IssueClass(db, "issue",
                 lon=Number(),
                 z=Number(),
                 location=String(),
-                #dates=Multilink("nameddate"),
-                dates=String())
+                dates=Multilink("nameddate"))
 
 #
 # TRACKER SECURITY SETTINGS
@@ -187,7 +183,7 @@ for cl in 'issue', 'file', 'msg', 'status': # 'keyword', 'priority',
 #   db.security.addPermissionToRole('Anonymous', 'Create', cl)
 #   db.security.addPermissionToRole('Anonymous', 'Edit', cl)
 for cl in 'issue', 'msg', 'nameddate':
-   db.security.addPermissionToRole('Anonymous', 'Create', cl)
+    db.security.addPermissionToRole('Anonymous', 'Create', cl)
 
 
 # vim: set filetype=python sts=4 sw=4 et si :

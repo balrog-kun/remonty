@@ -44,10 +44,11 @@
     <div class='row-fluid'>
       <div class='control-group'>
         <label class='control-label' for='title'>{{ i18n.gettext('Daty') }}</label>
-        <input name='dates' id='dates' type='hidden' value='{{ context.dates }}'>
         <div class='controls' id='dates-editor'></div>
-	<div class='btn' id='dates-add' form='' form_id=''>
+	<div class='btn' id='dates-add-btn' form='' form_id=''>
 	  <i class="icon-plus-sign"></i></div>
+        <input type='hidden' id='dates-add' name='@link@dates' value='' />
+        <input type='hidden' id='dates-remove' name='@remove@dates' value='' />
       </div>
     </div> <!-- row-fluid -->
 
@@ -173,17 +174,17 @@
     }
 
     function dates_setup(create, editable) {
-      var fresh = false;
       var elem = document.getElementById('dates-editor');
-      var elem_dates = document.getElementById('dates');
+      var elem_input_add = document.getElementById('dates-add');
+      var elem_input_remove = document.getElementById('dates-remove');
 
       var dates = [];
       function value_update() {
-        var d = [];
+        var ids = [];
 	for (var i = 0; i < dates.length; i++)
-	  d.push(dates[i][0] + '*' + (parseInt(dates[i][1]) + 1) + '*' +
-	      dates[i][2] + '*' + dates[i][3] + '*' + dates[i][4]);
-	elem_dates.value = encodeURI(d.join('\n'));
+	  if (dates[i].id < 0)
+	    ids.push('nameddate' + dates[i].id);
+	elem_input_add.value = ids.join(', ');
       }
 
       function move_row(row, move) {
@@ -205,12 +206,10 @@
       function sort_update(row) {
 	while (1) {
 	  var idx = dates.indexOf(row.dates);
-	  if (idx && new Date(dates[idx][0], dates[idx][1], dates[idx][2]) <
-	      new Date(dates[idx - 1][0], dates[idx - 1][1], dates[idx - 1][2]))
+	  if (idx && dates[idx].date < dates[idx - 1].date)
 	    move_row(row, -1);
 	  else if (idx < dates.length - 1 &&
-	      new Date(dates[idx][0], dates[idx][1], dates[idx][2]) >
-	      new Date(dates[idx + 1][0], dates[idx + 1][1], dates[idx + 1][2]))
+	      dates[idx].date > dates[idx + 1].date)
 	    move_row(row, 1);
 	  else
 	    break;
@@ -218,103 +217,130 @@
       }
 
       function add_date(d) {
+	d = {
+          'id': d[0],
+	  'name': d[1],
+	  'date': d[2],
+	  'note': d[3],
+	};
 	dates.push(d);
 
-	var row = document.createElement('div');
-	row.dates = d;
-	row.elem_date = document.createElement('span');
-	row.elem_name = document.createElement('input');
-	row.elem_del = document.createElement('button');
+	d.row = document.createElement('div');
+	d.row.dates = d;
+	d.elem_date = document.createElement('span');
+	d.elem_name = document.createElement('input');
+	d.elem_note = document.createElement('input');
+	d.elem_issue = document.createElement('input');
+	d.elem_del = document.createElement('button');
 
-	row.elem_date.innerHTML = '<input type="text" class="input-medium" />' +
+	d.elem_date.innerHTML = '<input type="text" ' +
+	  'name="nameddate' + d.id + '@date" ' +
+          'class="input-medium" />' +
 	  '<span class="add-on"><i class="icon-calendar"></i></span>';
-	row.elem_date.setAttribute('class', 'input-append date');
-	$(row.elem_date).datepicker({
+	d.elem_date.setAttribute('class', 'input-append date');
+	$(d.elem_date).datepicker({
 	    format: "yyyy-mm-dd",
             calendarWeeks: true,
 	    todayHighlight: true,
 	    language: "pl",
 	  });
-	$(row.elem_date).datepicker('update', new Date(d[0], d[1], d[2]));
-	$(row.elem_date).datepicker().on('changeDate', function(e) {
-	    $(this).context.state.dates[0] = e.date.getFullYear();
-	    $(this).context.state.dates[1] = e.date.getMonth();
-	    $(this).context.state.dates[2] = e.date.getDate();
+	$(d.elem_date).datepicker('update', d.date);
+	$(d.elem_date).datepicker().on('changeDate', function(e) {
+	    $(this).context.state.dates.date = e.date;
 	    sort_update($(this).context.state);
-	    value_update();
 	  });
-	row.elem_date.state = row;
+	d.elem_date.state = d.row;
 
-	row.elem_name.setAttribute('class', 'input-xxlarge');
-	row.elem_name.setAttribute('form_id', '');
-	row.elem_name.setAttribute('form', '');
-	row.elem_name.setAttribute('type', 'text');
-	row.elem_name.value = d[4];
-	$(row.elem_name).on('input', function(e) {
-	    $(this).context.state.dates[4] = $(this).context.value;
-	    value_update();
+	d.elem_name.setAttribute('class', 'input-xxlarge');
+	d.elem_name.setAttribute('name', 'nameddate' + d.id + '@desc');
+	d.elem_name.setAttribute('type', 'text');
+	d.elem_name.value = d.name;
+	$(d.elem_name).on('input', function(e) {
+	    $(this).context.state.dates.name = $(this).context.value;
 	  });
-	row.elem_name.state = row;
+	d.elem_name.state = d.row;
 
-	row.elem_del.setAttribute('class', 'btn');
-	row.elem_del.setAttribute('form_id', '');
-	row.elem_del.setAttribute('form', '');
-	row.elem_del.innerHTML = '<i class="icon-remove-sign"></i>';
-	$(row.elem_del).on('click', function(e) {
+	d.elem_note.setAttribute('name', 'nameddate' + d.id + '@note');
+	d.elem_note.setAttribute('type', 'hidden');
+	d.elem_note.setAttribute('value', d.note);
+
+	d.elem_issue.setAttribute('type', 'hidden');
+	d.elem_issue.setAttribute('name', '@link@nameddate' + d.id + '@issue');
+        {% if context.id %}
+	  d.elem_issue.setAttribute('value', 'issue{{ context.id }}');
+        {% else %}
+	  d.elem_issue.setAttribute('value', 'issue-1');
+	{% endif %}
+
+	d.elem_del.setAttribute('class', 'btn');
+	d.elem_del.setAttribute('form_id', '');
+	d.elem_del.setAttribute('form', '');
+	d.elem_del.innerHTML = '<i class="icon-remove-sign"></i>';
+	$(d.elem_del).on('click', function(e) {
 	    dates.splice(dates.indexOf($(this).context.state.dates), 1);
 	    elem.removeChild($(this).context.state);
 	    value_update();
+	    if (elem_input_remove.value.length)
+	      elem_input_remove.value += ', ';
+	    elem_input_remove.value += $(this).context.state.dates.id;
 	  });
-	row.elem_del.state = row;
+	d.elem_del.state = d.row;
 
-	row.appendChild(row.elem_date);
-	row.appendChild(document.createTextNode(' '));
-	row.appendChild(row.elem_name);
-	row.appendChild(document.createTextNode(' '));
-	row.appendChild(row.elem_del);
+	d.row.appendChild(d.elem_date);
+	d.row.appendChild(document.createTextNode(' '));
+	d.row.appendChild(d.elem_name);
+	d.row.appendChild(document.createTextNode(' '));
+	d.row.appendChild(d.elem_del);
+	d.row.appendChild(d.elem_note);
+	d.row.appendChild(d.elem_issue);
 
-	row.setAttribute('class', 'controls form-horizontal');
-	elem.appendChild(row);
+	d.row.setAttribute('class', 'controls form-horizontal');
+	elem.appendChild(d.row);
       }
 
-      var value = decodeURI(elem_dates.value).split('\n');
-      for (var i = 0; i < value.length; i++) {
-        var fragments = value[i].split('*');
-        if (fragments.length < 5)
-	  fresh = true;
-      }
-      if (value.length < 1)
+      var newid = -1;
+
+      $('#dates-add-btn').on('click', function(e) {
+          var new_date = new Date();
+	  if (dates.length)
+	    /* A day after the last date we currently know */
+	    new_date = new Date(dates[dates.length - 1].date.getTime() +
+		24 * 3600 * 1000)
+	  add_date([ newid--, '...', new_date, 0 ]);
+          value_update();
+	});
+
+      var initial = [
+      {% for date in context.dates.sorted('date') %}
+        [
+          {{ date.id }},
+	  /* TODO: escape */
+          '{{ date.desc }}',
+          new Date('{{ date.date.pretty(format="%Y-%m-%d") }}'),
+          {{ date.note }},
+        ],
+      {% endfor %}
+      ];
+
+      var fresh = false;
+
+      if (initial.length < 1)
 	fresh = true;
 
       if (fresh) {
 	var now = Date.now();
 	var today = new Date(now);
 	var in2wk = new Date(now + 14 * 24 * 3600 * 1000);
-	add_date([ today.getFullYear(), today.getMonth(), today.getDate(),
-	    0, 'Rozpoczęcie prac' ]);
-        add_date([ in2wk.getFullYear(), in2wk.getMonth(), in2wk.getDate(),
-	    0, 'Otwarcie' ]);
-      } else
-        for (var i = 0; i < value.length; i++) {
-          var fragments = value[i].split('*');
-	  var year = fragments.shift();
-	  var month = parseInt(fragments.shift()) - 1;
-	  var day = fragments.shift();
-	  var note = fragments.shift();
-	  add_date([ year, month, day, note, fragments.join('*') ]);
-        }
+	initial = [
+          [ newid--, 'Rozpoczęcie prac', today, 0 ],
+          [ newid--, 'Otwarcie', in2wk, 0 ],
+        ];
+      }
+
+      for (var i = 0; i < initial.length; i++)
+	add_date(initial[i]);
 
       value_update();
-
-      $('#dates-add').on('click', function(e) {
-          var new_date = new Date();
-	  if (dates.length) {
-	    var d = dates[dates.length - 1];
-	    new_date = new Date(d[0], d[1], parseInt(d[2]) + 1);
-	  }
-	  add_date([ new_date.getFullYear(), new_date.getMonth(),
-	      new_date.getDate(), 0, '...' ]);
-	});
     }
 
     document.body.onload = function() {
@@ -323,9 +349,14 @@
       {% else %}
       var fresh = true;
       {% endif %}
+      {% if context.is_edit_ok() %}
+      var editable = true;
+      {% else %}
+      var editable = false;
+      {% endif %}
 
-      map_setup(fresh, true);
-      dates_setup(fresh, true);
+      map_setup(fresh, editable);
+      dates_setup(fresh, editable);
     }
   </script>
 </form>
