@@ -31,16 +31,20 @@
               <div class='page-header'>
                 <h1> {% block page_header %} {% endblock %} </h1>
                 {% if options.error_message %}
+                {% for errormsg in options.error_message %}
                   <p class='alert alert-block alert-error fade in'> 
-                    {{ options.error_message }}
+		    {{ errormsg.replace('\n', '<br />') }}
                     <button type='button' class='close' data-dismiss='alert'>X</button>
                   </p>
+                {% endfor %}
                 {% endif %}
                 {% if options.ok_message %}
+                {% for okmsg in options.ok_message %}
                   <p class='alert alert-block alert-success fade in'> 
-                    {{ options.ok_message }}
+		    {{ okmsg.replace('\n', '<br />') }}
                     <button type='button' class='close' data-dismiss='alert'>X</button>
                   </p>
+                {% endfor %}
                 {% endif %}
               </div>
             {% block content %}
