@@ -3,6 +3,34 @@
 {% if request.user.hasPermission('View', 'issue') %}
   <ul class='nav nav-list'>
     <li class='nav-header'>
+      <i class='icon-exclamation-sign'></i>{{ i18n.gettext('Terminy') }}
+    </li>
+    <li>
+      <a href="{{ request.indexargs_url('nameddate', {
+        '@sort': 'date',
+        '@group': 'date',
+        '@filter': 'date',
+        '@columns': columns_showall,
+        'date': 'from -1d',
+        '@search_text': '',
+        '@dispname': i18n.gettext('Nadchodzące daty'),
+       }) }}">{{ i18n.gettext('Nadchodzące') }}</a>
+    </li>
+    <li>
+      <a href="{{ request.indexargs_url('nameddate', {
+        '@sort': '-date',
+        '@group': 'date',
+        '@filter': 'date',
+        '@columns': columns_showall,
+        'date': 'to -1d',
+        '@search_text': '',
+        '@dispname': i18n.gettext('Ostatnie daty'),
+       }) }}">{{ i18n.gettext('Minione') }}</a>
+    </li>
+  </ul>
+  <hr>
+  <ul class='nav nav-list'>
+    <li class='nav-header'>
       <i class='icon-exclamation-sign'></i>{{ i18n.gettext('Remonty') }}
     </li>
     {% if request.user.hasPermission('Create', 'issue') %}

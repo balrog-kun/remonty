@@ -1,0 +1,63 @@
+{% extends 'layout/page.html' %}
+
+{% block head_title %}
+  {{ request.dispname or 'Remonty' }}
+{% endblock %}
+
+{% block page_header %}
+  {{ request.dispname or 'Nadchodzące daty' }}
+{% endblock %}
+
+{% block content %}
+
+  {% include 'layout/permission.html' %}
+
+  {% if context.is_view_ok %}
+    {% set batch = request.batch() %}
+    {% if batch %}
+      <table class='table'>
+        <tr class='info'>
+          <td>{{ i18n.gettext('Data') }}</td>
+          <td>{{ i18n.gettext('Lokalizacja') }}</td>
+          <td>{{ i18n.gettext('Opis') }}</td>
+          <td>{{ i18n.gettext('Remont') }}</td>
+          <td>{{ i18n.gettext('Zmienił(a)') }}</td>
+        </tr>
+        {% for nameddate in batch %}
+          <tr>
+           <td>
+            <a href='issue{{ nameddate.issue.id }}'>{{ nameddate.date.pretty(format='%Y-%m-%d') }}</a>
+           </td>
+           <td>
+            <a href='issue{{ nameddate.issue.id }}'>{{ nameddate.issue.location.plain(hyperlink=0) }}</a>
+           </td>
+           <td>
+            {{ utils.prettify(nameddate.desc.plain(hyperlink=0)) }}</a>
+           </td>
+           <td>
+            <a href='issue{{ nameddate.issue.id }}'>{{ nameddate.issue.status.plain() }}</a>
+           </td>
+           <td>{{ nameddate.actor }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p class='text-error'>{{ i18n.gettext('Aktualnie brak terminów do wyświetlenia') }}</p>
+    {% endif %}
+  {% endif %}
+
+  {% include 'layout/pagination.html' %}
+
+  <div class='row-fluid'> 
+    <div class='pull-right'>
+      <a class='btn btn-success'
+          href="{{ request.indexargs_url('nameddate', {'@action':'export_csv'}) }}">
+        {{ i18n.gettext('Pobierz CSV') }}
+      </a>
+    </div>
+  </div>
+
+  {% include 'layout/sort.html' %}
+
+{% endblock %}
+<!-- SHA: 64dee2942ac2bad596917eea21c992200dc797b9 -->

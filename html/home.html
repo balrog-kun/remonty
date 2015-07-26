@@ -1,9 +1,10 @@
 {{
-  db.issue.renderWith('index',
-    sort=[('-', 'activity')],
-    filter=['status'],
+  db.nameddate.renderWith('index',
+    sort=[('+', 'date')],
+    filter=['date'],
+    group=[('+', 'date')],
     columns=['id', 'activity', 'title', 'creator', 'status'],
-    filterspec={'status':['1','2','3','4','6','7']}
+    filterspec={'date':'from -1d'}
   )
 }}
 <!-- SHA: a092720827c1cfc7b6dfed1b7fd328d6d15581d0 -->
