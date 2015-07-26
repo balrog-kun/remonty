@@ -13,6 +13,9 @@
       <div class='control-group'>
         <div class='controls'>
           <div id='map'></div>
+	  <small><input type="text" id="loc" value="" form="" form_id=""
+	    class="input-block-level"
+	    placeholder="Zaznacz lokalizację na mapie lub wklej tutaj współrzędne lub permalink" /></small>
         </div>
         <input type="hidden" name="lat" id="lat" value="{{ context.lat }}" required>
         <input type="hidden" name="lon" id="lon" value="{{ context.lon }}" required>
@@ -125,6 +128,8 @@
       var elem_lat = document.getElementById('lat');
       var elem_lon = document.getElementById('lon');
       var elem_z = document.getElementById('z');
+      var elem_loc = document.getElementById('loc');
+
       var ll = [ parseFloat(elem_lat.value), parseFloat(elem_lon.value) ];
       var z = parseInt(elem_z.value);
       var fresh = false;
@@ -147,14 +152,25 @@
 
       var marker = null;
 
-      function set_marker(ll) {
-        marker = new L.Marker(ll, { draggable: editable }).addTo(map);
+      function set_marker(ll, z) {
+        elem_lat.value = '' + ll.lat;
+        elem_lon.value = '' + ll.lng;
+        if (z !== undefined)
+          elem_z.value = '' + z;
 
-        marker.on('move', function(e) {
-            elem_lat.value = '' + e.latlng.lat;
-            elem_lon.value = '' + e.latlng.lng;
+	if (marker === null) {
+          marker = new L.Marker(ll, { draggable: editable }).addTo(map);
+
+          marker.on('move', function(e) {
+              elem_lat.value = '' + e.latlng.lat;
+              elem_lon.value = '' + e.latlng.lng;
+              elem_z.value = '' + map.getZoom();
+            });
+
+	  if (z === undefined)
             elem_z.value = '' + map.getZoom();
-          });
+	} else
+	  marker.setLatLng(ll);
       };
 
       if (fresh && editable) {
@@ -165,15 +181,68 @@
           var z = map.getZoom();
           if (z < 12)
             return;
-          elem_lat.value = '' + ll.lat;
-          elem_lon.value = '' + ll.lng;
-          elem_z.value = '' + z;
-
           set_marker(ll);
         };
         map.on('click', maponclick);
       } else if (!fresh)
         set_marker(ll);
+
+      function parse_coords(str) {
+	/* TODO: other formats: N50, E21, deg+min+sec, NMEA, etc */
+	var patterns = {
+	  'lat': [
+	    /^(\d+\.\d+), *\d+\.\d+$/,
+            /\blat=(\d+\.\d+)\b/,
+            /\bmap=\d+\/(\d+\.\d+)\/\d+\.\d+\b/,
+            /\bll=(\d+\.\d+),\d+\.\d+\b/
+	  ],
+	  'lon': [
+	    /^\d+\.\d+, *(\d+\.\d+)$/,
+            /\blon=(\d+\.\d+)\b/,
+            /\blng=(\d+\.\d+)\b/,
+            /\bmap=\d+\/\d+\.\d+\/(\d+\.\d+)\b/,
+            /\bll=\d+\.\d+,(\d+\.\d+)\b/
+	  ],
+	  'z': [
+            /\bz=(\d+\.\d+)\b/,
+            /\bzoom=(\d+\.\d+)\b/,
+            /\bmap=(\d+)\/\d+\.\d+\/\d+\.\d+\b/
+	  ],
+	};
+
+	var results = {};
+	for (var j = 0; j < 3; j++) {
+	  var coord = [ 'lat', 'lon', 'z' ][j];
+	  for (var i = 0; i < patterns[coord].length; i++) {
+	    var m = patterns[coord][i].exec(str);
+	    if (m === null)
+	      continue;
+	    results[coord] = m[1];
+	    break;
+	  }
+	  if (!(coord in results))
+	    break;
+	}
+	if (!('lat' in results && 'lon' in results))
+	  return;
+
+	var ll = new L.LatLng(parseFloat(results.lat), parseFloat(results.lon));
+	var z = undefined;
+	if ('z' in results)
+	  z = parseInt(results.z);
+
+	if (z)
+	  map.setZoom(z);
+	else if (map.getZoom() < 12)
+	  map.setZoom(14);
+	set_marker(ll, z);
+	map.panTo(ll);
+      }
+
+      if (elem_loc != undefined)
+	$(elem_loc).on('input', function(e) {
+	    parse_coords($(this).context.value);
+	  });
     }
 
     function dates_setup(create, editable) {
