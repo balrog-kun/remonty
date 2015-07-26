@@ -61,7 +61,7 @@ file = FileClass(db, "file",
                 name=String())
 
 nameddate = Class(db, "nameddate",
-                issue=Link("issue"),
+                issue=Link("issue", do_journal='no'),
                 date=Date(),
                 desc=String(),
                 note=Number())

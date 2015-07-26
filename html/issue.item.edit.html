@@ -230,7 +230,6 @@
 	d.elem_date = document.createElement('span');
 	d.elem_name = document.createElement('input');
 	d.elem_note = document.createElement('input');
-	d.elem_issue = document.createElement('input');
 	d.elem_del = document.createElement('button');
 
 	d.elem_date.innerHTML = '<input type="text" ' +
@@ -264,14 +263,6 @@
 	d.elem_note.setAttribute('type', 'hidden');
 	d.elem_note.setAttribute('value', d.note);
 
-	d.elem_issue.setAttribute('type', 'hidden');
-	d.elem_issue.setAttribute('name', '@link@nameddate' + d.id + '@issue');
-        {% if context.id %}
-	  d.elem_issue.setAttribute('value', 'issue{{ context.id }}');
-        {% else %}
-	  d.elem_issue.setAttribute('value', 'issue-1');
-	{% endif %}
-
 	d.elem_del.setAttribute('class', 'btn');
 	d.elem_del.setAttribute('form_id', '');
 	d.elem_del.setAttribute('form', '');
@@ -280,9 +271,11 @@
 	    dates.splice(dates.indexOf($(this).context.state.dates), 1);
 	    elem.removeChild($(this).context.state);
 	    value_update();
-	    if (elem_input_remove.value.length)
-	      elem_input_remove.value += ', ';
-	    elem_input_remove.value += $(this).context.state.dates.id;
+	    if ($(this).context.state.dates.id >= 0) {
+	      if (elem_input_remove.value.length)
+	        elem_input_remove.value += ', ';
+	      elem_input_remove.value += $(this).context.state.dates.id;
+	    }
 	  });
 	d.elem_del.state = d.row;
 
@@ -292,7 +285,6 @@
 	d.row.appendChild(document.createTextNode(' '));
 	d.row.appendChild(d.elem_del);
 	d.row.appendChild(d.elem_note);
-	d.row.appendChild(d.elem_issue);
 
 	d.row.setAttribute('class', 'controls form-horizontal');
 	elem.appendChild(d.row);
