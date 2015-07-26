@@ -3,7 +3,7 @@
 {% if request.user.hasPermission('View', 'issue') %}
   <ul class='nav nav-list'>
     <li class='nav-header'>
-      <i class='icon-exclamation-sign'></i>{{ i18n.gettext('Terminy') }}
+      <i class='icon-list-alt'></i>{{ i18n.gettext('Terminy') }}
     </li>
     <li>
       <a href="{{ request.indexargs_url('nameddate', {
@@ -31,7 +31,7 @@
   <hr>
   <ul class='nav nav-list'>
     <li class='nav-header'>
-      <i class='icon-exclamation-sign'></i>{{ i18n.gettext('Remonty') }}
+      <i class='icon-warning-sign'></i>{{ i18n.gettext('Remonty') }}
     </li>
     {% if request.user.hasPermission('Create', 'issue') %}
       <li>
