@@ -7,6 +7,10 @@ tracker_home = os.path.dirname(os.path.abspath(
 sys.path.append(tracker_home)
 import search_py2
 
+# Should lazily retrieve these from the database
+duplicate_status = '8'
+closed_status = [ '5', '6', '8' ]
+
 def check_dates(db, cl, nodeid, newvalues):
     if nodeid is not None and 'dates' not in newvalues:
 	return
@@ -16,6 +20,17 @@ def check_dates(db, cl, nodeid, newvalues):
     if len(dates) < 1:
 	raise ValueError, 'Potrzebne są przynajmniej przybliżone daty ' + \
             'rozpoczęcia i zakończenia prac'
+
+def check_new_status(db, cl, nodeid, newvalues):
+    if newvalues['status'] in closed_status:
+	raise ValueError, 'Nowy remont nie może być zamknięty ani ' + \
+	    'być duplikatem'
+
+def check_existing_status(db, cl, nodeid, newvalues):
+    current_status = cl.get(nodeid, 'status')
+    if current_status == duplicate_status:
+	raise ValueError, 'Nie można edytować zgłoszenia oznaczonego jako ' + \
+	    'duplikat'
 
 def flush_dates(db, cl, nodeid, oldvalues):
     # Drop nameddate objects that have been unlinked from the issue object
@@ -75,6 +90,8 @@ def init(db):
     # fire before changes are made
     db.issue.audit('set', check_dates)
     db.issue.audit('create', check_dates)
+    db.issue.audit('create', check_new_status)
+    db.issue.audit('set', check_existing_status)
     db.issue.audit('create', add_location)
 
     # fire after changes are made
