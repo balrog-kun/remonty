@@ -33,9 +33,10 @@
     <!-- title TODO: move to the same row as status -->
     <div class='row-fluid'>
       <div class='control-group'>
-        <label class='control-label' for='title'>{{ i18n.gettext('Nazwa (opcjonalna)') }}</label>
+        <label class='control-label' for='title'>{{ i18n.gettext('Nazwa') }}</label>
         <div class='controls'>
-          <input name='title' id='title' type='text' class='input-xxlarge' value='{{ context.title }}'>
+	  <input name='title' id='title' type='text' class='input-xxlarge' value='{{ context.title }}'
+	    placeholder="Nazwa jest opcjonalna">
         </div>
       </div>
     </div> <!-- row-fluid -->
@@ -55,10 +56,11 @@
     <!-- link -->
     <div class='row-fluid'>
       <div class='control-group'>
-        <label class='control-label' for='title'>{{ i18n.gettext('Link (opcjonalny)') }}</label>
+        <label class='control-label' for='title'>{{ i18n.gettext('Link') }}</label>
         <div class='controls'>
           <div class='input-append'>
-            <input name='url' id='url' type='text' class='input-xxlarge span2' value='{{ context.url }}'>
+	    <input name='url' id='url' type='text' class='input-xxlarge span2' value='{{ context.url }}'
+	      placeholder="Opcjonalny: link do informacji na stronie urzędu, wykonawcy itp.">
 	    <span class="add-on"><i class="icon-bookmark"></i></span>
           </div>
         </div>
@@ -68,9 +70,10 @@
     <!-- Note -->
     <div class='row-fluid'>
       <div class='control-group'>
-        <label class='control-label' for='note'>{{ i18n.gettext('Opis (opcjonalny - jakich tras będzie dotyczyć, ...)') }}</label>
+        <label class='control-label' for='note'>{{ i18n.gettext('Opis') }}</label>
         <div class='controls'>
-	  <textarea name='note' rows="5" class='input-xxlarge' id='note'>{{ context.note }}</textarea>
+	  <textarea name='note' rows="5" class='input-xxlarge' id='note'
+	    placeholder="Opcjonalny: jakich dróg dotyczy remont i inne informacje.">{{ context.note }}</textarea>
         </div>
       </div>
     </div> <!-- row-fluid -->
