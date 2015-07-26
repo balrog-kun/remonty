@@ -7,9 +7,9 @@ sub_links = [
       '<a href="issue\g<id>">#\g<ws>\g<id></a>' ),
 ]
 sub_nolinks = [
-    ( re.compile('\\b(?P<num>DW\s*\d\d\d)\\b'),
+    ( re.compile('\\bDW\s*(?P<num>\d\d\d)\\b'),
       '<span class="droga-w">\g<num></span>' ),
-    ( re.compile('\\b(?P<num>DK\s*\d\d?)\\b'),
+    ( re.compile('\\bDK\s*(?P<num>\d\d?)\\b'),
       '<span class="droga-k">\g<num></span>' ),
     ( re.compile('\\b(?P<num>E\s*\d\d\d?)\\b'),
       '<span class="droga-e">\g<num></span>' ),
