@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed version="0.3" xmlns="http://purl.org/atom/ns#">
+  <title>Remonty OSM - nadchodzące terminy</title>
+  <link rel="alternate" type="text/html">http://remonty.openstreetmap.pl/</link>
+  {% set batch = request.batch() %}
+  {% for nameddate in batch %}
+  <entry>
+    <title>{{ nameddate.date.pretty(format='%Y-%m-%d') }}: {{ nameddate.issue.location.plain(hyperlink=0) }}</title>
+    <link rel="alternate" type="text/html">http://remonty.openstreetmap.pl/remonty/issue{{ nameddate.issue }}</link>
+    <id>remonty/nameddate{{ nameddate.id }}</id>
+    <summary mode="escaped" type="text/html">{{ utils.prettify(nameddate.desc.plain(hyperlink=0)) }}</summary>
+    <issued>nameddate.date</issued>
+    <modified>nameddate.modified</modified>
+  </entry>
+  {% endfor %}
+</feed>

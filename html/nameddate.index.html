@@ -54,6 +54,10 @@
           href="{{ request.indexargs_url('nameddate', {'@action':'export_csv'}) }}">
         {{ i18n.gettext('Pobierz CSV') }}
       </a>
+      <a class='btn btn-success'
+          href="{{ request.indexargs_url('nameddate', {'@template':'index.xml'}) }}">
+        {{ i18n.gettext('ATOM') }}
+      </a>
     </div>
   </div>
 
