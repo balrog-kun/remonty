@@ -29,7 +29,7 @@
             <a href='issue{{ nameddate.issue.id }}'>{{ nameddate.date.pretty(format='%Y-%m-%d') }}</a>
            </td>
            <td>
-            <a href='issue{{ nameddate.issue.id }}'>{{ nameddate.issue.location.plain(hyperlink=0) }}</a>
+	    {{ utils.location_link(nameddate.issue) }}
            </td>
            <td>
             {{ utils.prettify(nameddate.desc.plain(hyperlink=0)) }}</a>

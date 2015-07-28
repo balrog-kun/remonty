@@ -20,6 +20,7 @@
         {% endif %}
 	/></small>
       {% endif %}
+      <div style="text-align: right">{{ utils.location_link(context) }}</div>
       <input type="hidden" name="lat" id="lat" value="{{ context.lat }}" required>
       <input type="hidden" name="lon" id="lon" value="{{ context.lon }}" required>
       <input type="hidden" name="z" id="z" value="{{ context.z }}" required>

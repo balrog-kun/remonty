@@ -89,4 +89,14 @@ footer {
   content: '(brak)';
 }
 
+.permalinks a {
+  color: #999;
+}
+.permalinks {
+  padding-left: 5px;
+  color: #999;
+  font-size: 60%;
+  vertical-align: middle;
+}
+
 /* SHA: 719e315e0cc76e367541e496b2c66a47fa8be1c4 */
