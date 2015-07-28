@@ -173,7 +173,7 @@ db.security.addPermissionToRole('Anonymous', 'Register', 'user')
 
 # Allow anonymous users access to view issues (and the related, linked
 # information)
-for cl in 'issue', 'file', 'msg', 'status': # 'keyword', 'priority', 
+for cl in 'issue', 'file', 'msg', 'status', 'nameddate': # 'keyword', 'priority'
     db.security.addPermissionToRole('Anonymous', 'View', cl)
 
 # [OPTIONAL]
