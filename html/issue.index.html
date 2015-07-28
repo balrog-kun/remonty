@@ -15,7 +15,7 @@
   {% if context.is_view_ok %}
     {% set batch = request.batch() %}
     {% if batch %}
-      <table class='table'>
+      <table class='table table-striped'>
         <tr class='info'>
           <td>{{ i18n.gettext('ID') }}</td>
           <td>{{ i18n.gettext('Nazwa') }}</td>
