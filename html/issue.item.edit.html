@@ -377,6 +377,8 @@
 	d.elem_name = document.createElement('input');
 	d.elem_note = document.createElement('input');
 	d.elem_del = document.createElement('button');
+	if (d.note > 0)
+	  d.elem_link = document.createElement('a');
 
 	d.elem_date.innerHTML = '<input type="text" ' +
 	  'name="nameddate' + d.id + '@date" ' +
@@ -405,10 +407,6 @@
 	  });
 	d.elem_name.state = d.row;
 
-	d.elem_note.setAttribute('name', 'nameddate' + d.id + '@note');
-	d.elem_note.setAttribute('type', 'hidden');
-	d.elem_note.setAttribute('value', d.note);
-
 	d.elem_del.setAttribute('class', 'btn');
 	d.elem_del.setAttribute('form_id', '');
 	d.elem_del.setAttribute('form', '');
@@ -425,11 +423,25 @@
 	  });
 	d.elem_del.state = d.row;
 
+	if (d.note > 0) {
+	  d.elem_link.setAttribute('href',
+	      'http://www.openstreetmap.org/note/' + d.note);
+	  d.elem_link.innerHTML = 'notka #' + d.note;
+	}
+
+	d.elem_note.setAttribute('name', 'nameddate' + d.id + '@note');
+	d.elem_note.setAttribute('type', 'hidden');
+	d.elem_note.setAttribute('value', d.note);
+
 	d.row.appendChild(d.elem_date);
 	d.row.appendChild(document.createTextNode(' '));
 	d.row.appendChild(d.elem_name);
 	d.row.appendChild(document.createTextNode(' '));
 	d.row.appendChild(d.elem_del);
+	if (d.note > 0) {
+	  d.row.appendChild(document.createTextNode(' '));
+	  d.row.appendChild(d.elem_link);
+	}
 	d.row.appendChild(d.elem_note);
 
 	d.row.setAttribute('class', 'controls form-horizontal');
