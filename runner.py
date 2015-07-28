@@ -1,15 +1,51 @@
 #! /usr/bin/python2
 
-import sys, os, time, datetime
+import sys, os, time, datetime, urllib
+import xml.etree.cElementTree as ElementTree
+
+tracker_home = os.path.dirname(os.path.abspath(sys.argv[0]))
+sys.path.append(tracker_home + '/..')
+
+import roundup.instance
 
 # runner.ts needs to be in the same directory as this executable / module
-ts_path = os.path.dirname(os.path.abspath(sys.argv[0])) + '/runner.ts'
+ts_path = tracker_home + '/runner.ts'
 
 # Time of day at which to do our email sending and/or note creation every
 # day: 9am.  Anything submitted as opened-today or closed-today after that
 # time in the day (i.e. when the information wasn't in the database ahead
 # of that date) will not have a note created automatically here.
 cutoff_time = datetime.time(9, 0)
+
+noteapi = 'http://api06.dev.openstreetmap.org/api/0.6/notes'
+
+def post_note(desc, issueid, lat, lon, yr, mo, dy):
+	req_params = {
+		'lat': str(lat),
+		'lon': str(lon),
+		'text': ('Remonty %02i-%02i: ' % ( mo, dy )) + desc +
+			' - zobacz http://remonty.openstreetmap.pl/' +
+			'remonty/issue' + str(issueid)
+	}
+
+	conn = urllib.urlopen(noteapi, urllib.urlencode(req_params))
+	try:
+		newnote = conn.read()
+	finally:
+		conn.close()
+
+	root = ElementTree.fromstring(newnote)
+	if root.tag != 'osm':
+		raise Exception('Root not osm in ' + newnote)
+
+	for note in root:
+		if note.tag != 'note':
+			continue
+		for prop in note:
+			if prop.tag == 'id':
+				return int(prop.text)
+
+	raise Exception('Note id not found in ' + newnote)
 
 def get_timestamp():
 	return os.path.getmtime(ts_path)
@@ -23,6 +59,45 @@ def set_timestamp(ts):
 def process_date(yr, mo, dy):
 	# TODO: if too far in the past perhaps don't bother doing anything?
 	print('Processing ' + str((yr, mo, dy)))
+
+	tracker = roundup.instance.open(tracker_home)
+	db = tracker.open('admin')
+	db.tx_Source = 'cli'
+	dates = db.nameddate
+	issues = db.issue
+
+	current = dates.filter(None, {
+		'date': '%02i-%02i-%02i' % (yr, mo, dy) })
+	for dateid in current:
+		desc = dates.get(dateid, 'desc')
+		note = int(dates.get(dateid, 'note'))
+
+		# 0 - create a note for this date
+		# <int> - a note with id #<int> exists for this date
+		# -1 - do not create any note for this date
+		if note != 0:
+			continue
+
+		issueid = dates.get(dateid, 'issue')
+		lat = issues.get(issueid, 'lat')
+		lon = issues.get(issueid, 'lon')
+
+		try:
+			noteid = post_note(desc, issueid, lat, lon, yr, mo, dy)
+			print('note #' + str(noteid) + ' created')
+		except Exception as e:
+			print('Could not create a note for date ' +
+					str(dateid) + ': ' + str(e))
+			continue
+		try:
+			dates.set(dateid, note=noteid)
+			db.commit()
+		except Exception as e:
+			print('Could not save the new note for date ' +
+					str(noteid) + ': ' + str(e) +
+					'\n - please check!')
+			continue
+	db.close()
 
 while True:
 	last_day = datetime.date.fromtimestamp(get_timestamp())
