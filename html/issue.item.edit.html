@@ -97,7 +97,6 @@
     </div>
 
     {% if context.id and context.is_edit_ok() %}
-    <!-- Note. TODO: only display when something changed -->
     <div class='row-fluid'>
       <div class='control-group'>
         <label class='control-label' for='change_note'>{{ i18n.gettext('Komentarz') }}</label>
@@ -132,7 +131,8 @@
 
       var handle_edit = function(e) {
 	var ne = $(this).context;
-	ne.parentElement.replaceChild(ne.switchable_to, ne);
+	ne.parentElement.removeChild(ne);
+	ne.switchable_to.style.display = '';
       }
 
       if (!create) {
@@ -177,12 +177,13 @@
 	  table.appendChild(elem0);
 	  table.appendChild(elem1);
 	  elem0.innerHTML = name;
+	  elem1.appendChild(elem);
 	  if (name in noneditables) {
+	    elem.style.display = 'none';
 	    elem1.appendChild(ne);
 	    if (!ne.innerHTML.trim())
-	    ne.innerHTML = '<span class="empty-field" />';
-	  } else
-	    elem1.appendChild(elem);
+	      ne.innerHTML = '<span class="empty-field" />';
+	  }
 	  if (editable && (name in noneditables)) {
 	    ne.setAttribute('class', 'noneditable-field switchable-field');
 	    ne.innerHTML += '<i class="icon-pencil popup"></i>';
