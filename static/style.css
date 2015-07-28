@@ -65,4 +65,28 @@ footer {
   color: white;
 }
 
+.noneditable-field, .editable-field {
+  padding-bottom: 10px;
+}
+
+.switchable-field {
+  position: relative;
+}
+.switchable-field .popup {
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.switchable-field:hover .popup {
+  opacity: 1;
+}
+
+.empty-field {
+  color: #bbb;
+  font-size: 75%;
+}
+.empty-field:before {
+  content: '(brak)';
+}
+
 /* SHA: 719e315e0cc76e367541e496b2c66a47fa8be1c4 */

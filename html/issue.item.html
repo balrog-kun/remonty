@@ -23,11 +23,7 @@
   {% include 'layout/permission.html' %}
 
   {% if context.is_view_ok() %}
-    {% if context.is_edit_ok() %}
-      {% include 'issue.item.edit.html' %}
-    {% else %}
-      {% include 'issue.item.readonly.html' %}
-    {% endif %}
+    {% include 'issue.item.edit.html' %}
   {% endif %}
 
   {% if context.id %}
