@@ -64,7 +64,7 @@
     </div>
     <div class="noneditable-field" style="display: none" name="Link">
       {% if context.url.plain().strip() %}
-        <a href="context.url">{{ context.url.plain() }}</a>
+        <a href="{{ context.url }}">{{ context.url.plain() }}</a>
       {% else %}
         <span class="empty-field" />
       {% endif %}
