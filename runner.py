@@ -17,7 +17,13 @@ ts_path = tracker_home + '/runner.ts'
 # of that date) will not have a note created automatically here.
 cutoff_time = datetime.time(9, 0)
 
-noteapi = 'http://api06.dev.openstreetmap.org/api/0.6/notes'
+noteapi = 'http://api.openstreetmap.org/api/0.6/notes'
+
+statusmap = {
+	"1": "4", # nie-rozpoczety -> w-trakcie-do-poprawienia
+	"2": "4", # w-trakcie -> w-trakcie-do-poprawienia
+	"5": "6", # zamkniety -> zamkniety-do-poprawienia
+}
 
 def post_note(desc, issueid, lat, lon, yr, mo, dy):
 	req_params = {
@@ -81,6 +87,12 @@ def process_date(yr, mo, dy):
 		issueid = dates.get(dateid, 'issue')
 		lat = issues.get(issueid, 'lat')
 		lon = issues.get(issueid, 'lon')
+		status = issues.get(issueid, 'status')
+
+		if status in statusmap:
+			issues.set(issueid, status=statusmap[status])
+			# TODO: if last date in this issue, set status to
+			# zamkniety-do-poprawienia instead of w-trakcie-do-p.
 
 		try:
 			noteid = post_note(desc, issueid, lat, lon, yr, mo, dy)
