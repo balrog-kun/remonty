@@ -56,7 +56,7 @@ def flush_dates(db, cl, nodeid, oldvalues):
 
 def link_dates(db, cl, nodeid, oldvalues):
     current = { dateid: 1 for dateid in cl.get(nodeid, 'dates') }
-    previous = oldvalues['dates']
+    previous = oldvalues['dates'] if oldvalues else []
 
     for dateid in [ date for date in current if date not in previous ]:
 	db.nameddate.set(dateid, issue=nodeid)
