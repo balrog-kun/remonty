@@ -38,11 +38,11 @@ def prettify_nolink(message):
 def location_link(issue):
     if not issue:
 	return ''
-    dist = 400 # metres
-    left = float(issue.lon) - 360.0 * (dist / 0.5 / 40000000)
-    right = float(issue.lon) + 360.0 * (dist / 0.5 / 40000000)
-    top = float(issue.lat) + 360.0 * (dist / 40000000)
-    bottom = float(issue.lat) - 360.0 * (dist / 40000000)
+    dist = 250 # metres
+    left = float(issue.lon) - 360.0 * (dist / 0.5 / 40000000.0)
+    right = float(issue.lon) + 360.0 * (dist / 0.5 / 40000000.0)
+    top = float(issue.lat) + 360.0 * (dist / 40000000.0)
+    bottom = float(issue.lat) - 360.0 * (dist / 40000000.0)
     src = 'remonty.openstreetmap.pl%2Fremonty%2Fissue' + str(issue.id)
 
     osmlink  = 'http://osm.org/#map=' + str(issue.z) + '/' + \
