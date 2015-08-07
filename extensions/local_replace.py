@@ -33,6 +33,8 @@ def prettify_nolink(message):
     for cre, replacement in sub_nolinks:
         message = cre.sub(replacement, message)
 
+    return message
+
 def location_link(issue):
     if not issue:
 	return ''
