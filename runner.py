@@ -25,6 +25,8 @@ statusmap = {
 	"5": "6", # zamkniety -> zamkniety-do-poprawienia
 }
 
+stillpending = statusmap.values()
+
 def post_note(desc, issueid, lat, lon, yr, mo, dy):
 	req_params = {
 		'lat': str(lat),
@@ -52,6 +54,31 @@ def post_note(desc, issueid, lat, lon, yr, mo, dy):
 				return int(prop.text)
 
 	raise Exception('Note id not found in ' + newnote)
+
+def post_comment(noteid, desc, issueid, lat, lon, yr, mo, dy):
+	req_params = {
+		'text': ('Remonty %02i-%02i: ' % ( mo, dy )) + desc
+	}
+
+	conn = urllib.urlopen(noteapi + '/' + str(noteid) + '/comment',
+			urllib.urlencode(req_params))
+	try:
+		newcomment = conn.read()
+	finally:
+		conn.close()
+
+	root = ElementTree.fromstring(newcomment)
+	if root.tag != 'osm':
+		raise Exception('Root not osm in ' + newcomment)
+
+	for note in root:
+		if note.tag != 'note':
+			continue
+		for prop in note:
+			if prop.tag == 'id':
+				return int(prop.text)
+
+	raise Exception('Note id not found in ' + newcomment)
 
 def get_timestamp():
 	return os.path.getmtime(ts_path)
@@ -89,14 +116,35 @@ def process_date(yr, mo, dy):
 		lon = issues.get(issueid, 'lon')
 		status = issues.get(issueid, 'status')
 
+		if status in stillpending:
+			# Check if we have a note for the previous date
+			# in this issue
+			# TODO: check if still open, perhaps reopen
+			lastnote = None
+			issuedates = issues.get(issueid, 'dates')
+			for issuedateid in issuedates:
+				prevnote = int(dates.get(issuedateid, 'note'))
+				if prevnote <= 0:
+					continue
+				if lastnote is not None and lastnote > prevnote:
+					continue
+				lastnote = prevnote
+
 		if status in statusmap:
 			issues.set(issueid, status=statusmap[status])
 			# TODO: if last date in this issue, set status to
 			# zamkniety-do-poprawienia instead of w-trakcie-do-p.
 
 		try:
-			noteid = post_note(desc, issueid, lat, lon, yr, mo, dy)
-			print('note #' + str(noteid) + ' created')
+			if status not in stillpending or lastnote is None:
+				noteid = post_note(desc, issueid,
+						lat, lon, yr, mo, dy)
+				print('note #' + str(noteid) + ' created')
+			else:
+				noteid = lastnote
+				post_comment(noteid, desc, issueid,
+						lat, lon, yr, mo, dy)
+				print('commented on note #' + str(noteid))
 		except Exception as e:
 			print('Could not create a note for date ' +
 					str(dateid) + ': ' + str(e))
