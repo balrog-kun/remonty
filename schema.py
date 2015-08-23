@@ -63,7 +63,7 @@ file = FileClass(db, "file",
 nameddate = Class(db, "nameddate",
                 issue=Link("issue", do_journal='no'),
                 date=Date(),
-                desc=String(),
+                desc=String(indexme='yes'),
                 note=Number())
 
 # IssueClass automatically gets these properties in addition to the Class ones:
@@ -76,12 +76,12 @@ issue = IssueClass(db, "issue",
                 #tags=Multilink("tag"),
                 #priority=Link("priority"),
                 status=Link("status"),
-                note=String(),
-                url=String(),
+                note=String(indexme='yes'),
+                url=String(indexme='yes'),
                 lat=Number(),
                 lon=Number(),
                 z=Number(),
-                location=String(),
+                location=String(indexme='yes'),
                 dates=Multilink("nameddate"))
 
 #
