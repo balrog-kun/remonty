@@ -39,7 +39,8 @@
     <!-- Title -->
     <div class="editable-field" name="Nazwa">
       <input name='title' id='title' type='text' class='input-xxlarge' value='{{ context.title }}'
-	placeholder="Nazwa jest opcjonalna">
+	placeholder="Nazwa jest opcjonalna.  Może zawierać dwu-trzy wyrazowy opis.  Nie umieszczaj tu lokalizacji, terminów ani linków -- użyj do tego odpowiednich pól.  Np. &quot;rozszerzenie jezdni&quot; albo &quot;poprowadzenie tunelu&quot;"
+	title="Nazwa jest opcjonalna.  Może zawierać dwu-trzy wyrazowy opis.  Nie umieszczaj tu lokalizacji, terminów ani linków -- użyj do tego odpowiednich pól.  Np. &quot;rozszerzenie jezdni&quot; albo &quot;poprowadzenie tunelu&quot;">
     </div>
     <div class="noneditable-field" style="display: none" name="Nazwa">
       {{ utils.prettify(context.title.plain(hyperlink=1)) }}
@@ -58,7 +59,8 @@
     <div class="editable-field" name="Link">
       <div class='input-append'>
 	<input name='url' id='url' type='text' class='input-xxlarge' value='{{ context.url }}'
-	  placeholder="Opcjonalny: link do informacji na stronie urzędu, wykonawcy itp.">
+	  placeholder="Opcjonalny: link do informacji na stronie urzędu, wykonawcy itp."
+	  title="Opcjonalny: link do informacji na stronie urzędu, wykonawcy itp.">
 	<span class="add-on"><i class="icon-bookmark"></i></span>
       </div>
     </div>
@@ -74,7 +76,8 @@
     <!-- Note -->
     <div class="editable-field" name="Opis">
       <textarea name='note' rows="5" class='input-xxlarge' id='note'
-	placeholder="Opcjonalny: jakich dróg dotyczy remont i inne informacje.">{{ context.note }}</textarea>
+	placeholder="Opcjonalny: jakich dróg dotyczy remont i inne informacje."
+	title="Opis jest opcjonalny: jakich dróg dotyczy remont i inne informacje.">{{ context.note }}</textarea>
     </div>
     <div class="noneditable-field" style="display: none" name="Opis">
       {{ utils.prettify(context.note.plain(hyperlink=1)).replace('\n', '<br />') }}
