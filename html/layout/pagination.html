@@ -3,7 +3,9 @@
   <ul>
     {% if batch and batch.previous %}
       <li>
-        <a href="#">{{ i18n.gettext('Poprzednie') }}</a>
+        <a href="{{ request.indexargs_url(request.classname,
+                {'@startwith':batch.previous().first, '@pagesize':batch.previous().size}) }}"
+        >{{ i18n.gettext('Poprzednie') }}</a>
       </li>
     {% else %}
       <li class='disabled'>
