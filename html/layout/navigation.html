@@ -1,5 +1,6 @@
 {% set status_notresolved="1,2,3,4,6,7" %}
 {% set status_resolved="5,8" %}
+{% set status_fixme="4,6" %}
 {% if request.user.hasPermission('View', 'issue') %}
   <ul class='nav nav-list'>
     <li class='nav-header'>
@@ -35,12 +36,19 @@
     <li class='nav-header'>
       <i class='icon-warning-sign'></i>{{ i18n.gettext('Remonty') }}
     </li>
-    {% if request.user.hasPermission('Create', 'issue') %}
-      <li>
-        <a href="issue?@template=item">{{ i18n.gettext('Dodaj remont') }}</a>
-      </li>
-    {% endif %}
 
+    <li>
+      <a href="{{ request.indexargs_url('issue', {
+        '@sort': '-activity',
+        '@group': 'priority',
+        '@filter': 'status',
+        '@columns': columns_showall,
+        '@search_text': '',
+	'status': status_fixme,
+        '@dispname': i18n.gettext('Remonty z otwartymi notkami'),
+        '@pagesize': 25,
+       }) }}">{{ i18n.gettext('Do poprawy') }}</a>
+    </li>
     <li>
       <a href="{{ request.indexargs_url('issue', {
         '@sort': '-activity',
@@ -50,6 +58,7 @@
         '@search_text': '',
 	'status': status_notresolved,
         '@dispname': i18n.gettext('Aktualne remonty'),
+        '@pagesize': 25,
        }) }}">{{ i18n.gettext('Aktualne') }}</a>
     </li>
     <li>
@@ -61,11 +70,19 @@
         '@search_text': '',
 	'status': status_resolved,
         '@dispname': i18n.gettext('Zamknięte remonty'),
+        '@pagesize': 25,
        }) }}">{{ i18n.gettext('Zamknięte') }}</a>
     </li>
-    <li>
+
+    {% if request.user.hasPermission('Create', 'issue') %}
+      <li>
+        <a href="issue?@template=item">{{ i18n.gettext('Dodaj remont') }}</a>
+      </li>
+    {% endif %}
+
+    <!--li>
       <a href="issue?@template=search">{{ i18n.gettext('Szukaj') }}</a>
-    </li>
+    </li-->
     <li>
       <form method="POST" class='form-inline' action="{{ request.base }}">
         <input type="hidden" name="@type" value="issue">
@@ -119,6 +136,7 @@
         '@search_text': '',
         'creator': request.user.id,
         '@dispname': i18n.gettext('Twoje remonty'),
+        '@pagesize': 25,
       }) }}">{{ i18n.gettext('Twoje remonty') }}</a>
     </li>
     <li>
