@@ -66,7 +66,15 @@ def add_location(db, cl, nodeid, newvalues):
     #ret = search_py2.reverse(ll)['result']
     try:
         ret = search_py2.reverse(ll)['addressparts']
-	parts = [ 'road', 'village', 'town', 'city', 'county', 'state' ]
+
+	parts = [ 'city', 'town', 'village', 'hamlet', 'suburb' ]
+	part = []
+	for p in parts:
+	    if p in ret:
+		part = [ p ]
+		break
+
+	parts = [ 'road' ] + part + [ 'county', 'state' ]
 
 	if 'state' in ret:
 	    ret['state'] = ret['state'].replace('województwo ', '')
@@ -91,6 +99,8 @@ def add_location(db, cl, nodeid, newvalues):
 	if 'county' in ret and 'city' in ret and county == ret['city']:
 	    parts.remove('county')
 	if 'county' in ret and 'town' in ret and county == ret['town']:
+	    parts.remove('county')
+	if 'county' in ret and 'village' in ret and county == ret['village']:
 	    parts.remove('county')
 
 	newvalues['location'] = ', '.join([ ret[l] for l in parts if l in ret ])
