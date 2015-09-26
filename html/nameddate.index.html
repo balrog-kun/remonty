@@ -17,11 +17,11 @@
     {% if batch %}
       <table class='table table-striped'>
         <tr class='info'>
-          <td>{{ i18n.gettext('Data') }}</td>
-          <td>{{ i18n.gettext('Lokalizacja') }}</td>
-          <td>{{ i18n.gettext('Opis') }}</td>
-          <td>{{ i18n.gettext('Remont') }}</td>
-          <td>{{ i18n.gettext('Zmienił(a)') }}</td>
+          <td sort-col='date'>{{ i18n.gettext('Data') }}</td>
+          <td sort-col='issue.location'>{{ i18n.gettext('Lokalizacja') }}</td>
+          <td sort-col='desc'>{{ i18n.gettext('Opis') }}</td>
+          <td sort-col='issue.status'>{{ i18n.gettext('Remont') }}</td>
+          <td sort-col='actor'>{{ i18n.gettext('Zmienił(a)') }}</td>
         </tr>
         {% for nameddate in batch %}
           <tr>
@@ -63,5 +63,12 @@
 
   {% include 'layout/sort.html' %}
 
+{% endblock %}
+
+{% block extrajs %}
+  <script type="application/javascript">
+    var url_template = '{{ request.indexargs_url(request.classname, { "@group": "__placeholder"}) }}';
+    $(document).ready(make_sortable);
+  </script>
 {% endblock %}
 <!-- SHA: 64dee2942ac2bad596917eea21c992200dc797b9 -->

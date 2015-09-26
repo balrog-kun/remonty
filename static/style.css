@@ -99,4 +99,13 @@ footer {
   vertical-align: middle;
 }
 
+.sort-up:after {
+  font-size: 60%;
+  content: '▲';
+}
+.sort-down:after {
+  font-size: 60%;
+  content: '▼';
+}
+
 /* SHA: 719e315e0cc76e367541e496b2c66a47fa8be1c4 */
